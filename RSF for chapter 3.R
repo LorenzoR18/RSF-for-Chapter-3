@@ -9,11 +9,8 @@ library(terra)
 library(survival)
 library(mgcv)
 
-setwd('C:\\Users\\Lorenzo\\OneDrive - Stellenbosch University\\LorenzosProject\\Chapter 3')
-
 (geo = '+proj=longlat +datum=WGS84 +no_defs') # Unprojected world Geodetic System (degrees) CRS("+init=epsg:4326")
 Krugershape=readOGR('boundary_kruger_H7_south_geo.shp')# To see whether our points lie inside KNP or not
-
 
 #census <- read_excel("rhino_census_sample_geo_krugerSouth_1998_to_2008_2010_2012_2014_2016.xlsx")
 #dead<-readShapeSpatial("rhino_dead_geo_krugerSouth_2007_to_2017.shp")
@@ -98,15 +95,10 @@ dw_df_yd=cbind(dw_df_yd, used, stratum)
 #distributions. The process is to be repeated until the point will fall within the KNP.
 
 Krugershape
-n.pseudo=2 #setting the number of random points generated
+n.pseudo=5 #setting the number of random points generated
 dw_df_yd_a=dw_df_yd
-pippo=0
 for(i in 1:nrow(dw_df_yd))#We generate the random points
 {
-  #Z.null[i,] <-Z1[i] + sample(na.omit(RelSteps),n.pseudo) * Rotate[i] #Rotate (with RelSteps) is used to "randomize"
-  #the angles (otherwise their sides will be parallel)
-  #dw_df_yd_a[i,]=dw_s
-  
   for(j in 1:n.pseudo)#We discard the random steps that lay outside KNP borders
   {
     dw_df_yd_a[(i-1)*n.pseudo+j,]=dw_df_yd[i,]
@@ -122,7 +114,6 @@ for(i in 1:nrow(dw_df_yd))#We generate the random points
     spdf=SpatialPoints(coords=xy,proj4string=CRS('+proj=longlat +datum=WGS84 +no_defs'))
     while(length(spdf[Krugershape,])==0)
     {
-      pippo=pippo+1
       dw_df_yd_a[(i-1)*n.pseudo+j,]=dw_df_yd[i,]
       dw_df_yd_a[(i-1)*n.pseudo+j,]$used=0
       lon=runif(1,raster::xmin(Krugershape),raster::xmax(Krugershape))
@@ -425,31 +416,6 @@ predict_rsf_with_ci <- function(model, grid_df, vars, shape, conf_level = 0.95) 
   
   return(list(mean = df_mean, uncertainty = df_uncert))
 }
-
-
-res15 <- predict_rsf_with_ci(
-  model = d2015,
-  grid_df = grid_df15,
-  vars = c("distRivers", "distRoads", "elevation","WnoPdist", "slope", "Sdist","evi2015"),
-  shape = Krugershape
-)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -814,4 +780,5 @@ p2_norm <- ggplot(res17$uncert, aes(x = x, y = y, fill = uncert)) +
   coord_equal() + theme_minimal()
 
 # Show side-by-side
+
 gridExtra::grid.arrange(p1, p2_norm,  ncol = 2)
